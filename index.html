@@ -13,7 +13,7 @@
     <output id="messages"></output>
     <script>
         const messages = document.getElementById("messages")
-        const socket = new WebSocket('ws://localhost:1337')
+        const socket = new WebSocket('ws://localhost:3000')
         socket.onopen = (event) => {
             console.log('WebSocket is connected!')
             const id = Math.round(Math.random() * 100)
@@ -37,6 +37,7 @@
                     ]
                 )
 
+                console.log(`Sending bytes: ${data.length}`);
                 socket.send(data)
             }, 1000)
 
