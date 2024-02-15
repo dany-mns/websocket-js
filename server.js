@@ -64,8 +64,36 @@ function onReadableSocket(socket) {
 
     const maskKey = socket.read(MASK_BYTES_SIZE);
     const messageEncoded = socket.read(messageLength);
-    const result = decodeMessage(messageEncoded, maskKey);
-    console.log();
+    const messageDecoded = decodeMessage(messageEncoded, maskKey);
+    console.log(`From client: "${messageDecoded}"`);
+
+    // Send data to client
+    const messageFromServer = "Hello world!";
+    socket.write(encapsulateMessage(messageFromServer));
+}
+
+function encapsulateMessage(message) {
+    const msg = Buffer.from(message);
+    const msgSize = msg.length;
+
+    let dataFrameBuffer;
+    const firstByte = 0x80 | 0x01;
+    if (msgSize <= SEVEN_BITS_INTEGER_MARKER) {
+        dataFrameBuffer = Buffer.from([firstByte].concat(msgSize));
+    } else {
+        throw new Error(`Message (${message}) with ${msgSize} longer than ${SEVEN_BITS_INTEGER_MARKER}`);
+    }
+
+    const totalLength = dataFrameBuffer.byteLength + msgSize;
+
+    const finalMsgFrame = Buffer.allocUnsafe(totalLength);
+    let offest = 0;
+    for (const buffer of [dataFrameBuffer, msg]) {
+        finalMsgFrame.set(buffer, offest);
+        offest += buffer.length;
+    }
+
+    return finalMsgFrame;
 }
 
 
